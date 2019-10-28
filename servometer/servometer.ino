@@ -63,6 +63,9 @@ int servoAngle = SERVO_MAX;
 int currentServoAngle = SERVO_MAX;
 int noDataCount = 0;
 
+int servoType = 180;  //360 for continuous rotation servo
+int servoSpeed = 130;  //Servo motor speed in RPM
+
 /*
   Setup, initialize i2c and other pins
 */
@@ -149,7 +152,25 @@ void moveServo() {
   else {
     while(currentServoAngle != servoAngle) {
       currentServoAngle += (servoAngle > currentServoAngle ? 1 : -1);
-      servo.write(currentServoAngle);
+      if(servoType==180)
+      {
+        servo.write(currentServoAngle);
+      }
+      else
+      {
+        if(currentServoAngle>servoAngle)
+        {
+          servo.write(180);
+          delay((((currentServoAngle-servoAngle)/360)/(servoSpeed*60))*1000);
+          servo.write(90);
+        }
+        else
+        {
+          servo.write(180);
+          delay((((servoAngle-currentServoAngle)/360)/(servoSpeed*60))*1000);
+          servo.write(90);
+        }
+      }
       delay(50);
     }
   }
@@ -220,15 +241,27 @@ String formatValueForSegmentDisplay(String value)
 void cycleServo() 
 {
   // now scan back from 180 to 0 degrees
-  for(int servoAngle = SERVO_MAX; servoAngle > SERVO_MIN; servoAngle--)    
-  {                                
-    servo.write(servoAngle);           
-    delay(5);       
-  } 
-  // scan from 0 to 180 degrees
-  for(int servoAngle = SERVO_MIN; servoAngle < SERVO_MAX; servoAngle++)  
-  {                                  
-    servo.write(servoAngle);               
-    delay(5);                   
-  } 
+  if(servoType==180)
+  {
+    for(int servoAngle = SERVO_MAX; servoAngle > SERVO_MIN; servoAngle--)    
+    {                                
+      servo.write(servoAngle);           
+      delay(5);       
+    } 
+    // scan from 0 to 180 degrees
+    for(int servoAngle = SERVO_MIN; servoAngle < SERVO_MAX; servoAngle++)  
+    {                                  
+      servo.write(servoAngle);               
+      delay(5);                   
+    }
+  }
+  else
+  {
+    servoAngle = SERVO_MAX;
+    servo.write(180);
+    while(servoAngle > SERVO_MIN);
+    servo.write(0);
+    while(servoAngle < SERVO_MAX);
+    servo.write(90);
+  }
 }
